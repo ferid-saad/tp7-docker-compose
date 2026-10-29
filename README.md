@@ -17,6 +17,10 @@ Build de l'image naïve (`Dockerfile.naive`) puis modification d'une ligne de `s
 
 Sans `.dockerignore`, la couche `COPY . .` embarque aussi le `node_modules/` local (33,3 MB).
 
+![Build à froid de l'image naïve](captures/naive-build-froid.png)
+![Taille de l'image naïve](captures/naive-image-ls.png)
+![Couches de l'image naïve](captures/naive-history.png)
+
 ## 3. Partie 2 : Mesures de l'image naïve
 _À compléter._
 
