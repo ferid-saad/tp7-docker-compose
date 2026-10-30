@@ -22,7 +22,22 @@ Sans `.dockerignore`, la couche `COPY . .` embarque aussi le `node_modules/` loc
 ![Couches de l'image naïve](captures/naive-history.png)
 
 ## 3. Partie 2 : Mesures de l'image naïve
-_À compléter._
+Mesures relevées sur `visits-app:naive` :
+
+- **Taille** : 1,67 GB.
+- **Utilisateur** : `root` (`uid=0`). Un processus root dans le conteneur reste root sur le noyau de l'hôte si une faille permet de s'échapper du conteneur.
+- **Vulnérabilités** (Trivy, HIGH et CRITICAL) : 487 au total, dont 481 dans les paquets Debian de l'image `node:24` (460 HIGH, 21 CRITICAL) et 6 dans les paquets Node.js (6 HIGH).
+
+Commande Trivy utilisée (le scan par défaut dépasse le délai de 5 minutes sur cette image lourde) :
+
+```bash
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+  -v trivy-cache:/root/.cache/ aquasec/trivy:latest image \
+  --timeout 30m --scanners vuln --severity HIGH,CRITICAL --quiet visits-app:naive
+```
+
+![Utilisateur de l'image naïve](captures/naive-user.png)
+![Vulnérabilités de l'image naïve](captures/naive-trivy-total.png)
 
 ## 4. Partie 3 : Dockerfile multi-stage
 
@@ -31,8 +46,8 @@ _À compléter._
 | Taille de l'image | 1,67 GB | |
 | Temps de build (à froid) | 8 min 43 s | |
 | Temps de build (code modifié) | 30 s | |
-| Vulnérabilités HIGH/CRITICAL | | |
-| Utilisateur | | |
+| Vulnérabilités HIGH/CRITICAL | 487 (HIGH : 466, CRITICAL : 21) | |
+| Utilisateur | root (uid=0) | |
 
 ![Comparaison des images](captures/image-comparison.png)
 ![Utilisateur non-root](captures/non-root.png)
