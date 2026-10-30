@@ -16,7 +16,7 @@ async function init(): Promise<void> {
 app.get("/", async (_req, res) => {
   await pool.query("INSERT INTO visits DEFAULT VALUES");
   const { rows } = await pool.query("SELECT count(*)::int AS total FROM visits");
-  res.json({ message: "Bonjour depuis le TP7 (v2)", visits: rows[0].total, host: process.env.HOSTNAME });
+  res.json({ message: "Bonjour depuis le TP7 (v3)", visits: rows[0].total, host: process.env.HOSTNAME });
 });
 
 // Utilisée par le HEALTHCHECK Docker et, plus tard, par les probes Kubernetes.

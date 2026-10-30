@@ -43,14 +43,26 @@ docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
 
 | Indicateur | naive | multistage |
 |---|---|---|
-| Taille de l'image | 1,67 GB | |
-| Temps de build (à froid) | 8 min 43 s | |
-| Temps de build (code modifié) | 30 s | |
-| Vulnérabilités HIGH/CRITICAL | 487 (HIGH : 466, CRITICAL : 21) | |
-| Utilisateur | root (uid=0) | |
+| Taille de l'image | 1,67 GB | 250 MB |
+| Temps de build (à froid) | 8 min 43 s | 1 min 5 s |
+| Temps de build (code modifié) | 30 s | 29,7 s |
+| Vulnérabilités HIGH/CRITICAL | 487 (HIGH : 466, CRITICAL : 21) | 6 (HIGH : 6, CRITICAL : 0) |
+| Utilisateur | root (uid=0) | node (uid=1000) |
 
 ![Comparaison des images](captures/image-comparison.png)
 ![Utilisateur non-root](captures/non-root.png)
+
+### Analyse
+
+- **Taille** : l'image passe de 1,67 GB à 250 MB. Elle repose sur `node:24-alpine` et ne contient que `dist/`, les dépendances de production et `package.json` (ni TypeScript, ni les sources, ni les outils de build).
+- **Build à froid** : 1 min 5 s contre 8 min 43 s, l'image de base Alpine étant bien plus légère à télécharger.
+- **Cache** : après modification de `src/server.ts`, l'étape `npm ci` est `CACHED` car seuls `package*.json` sont copiés avant l'installation. Les deux temps de build avec code modifié sont voisins (30 s et 29,7 s) : ici l'installation des dépendances est rapide et le multi-stage passe son temps dans `tsc` et `npm prune`. L'avantage du cache apparaît surtout quand l'installation est longue ou le réseau lent.
+- **Contexte de build** : avec le `.dockerignore`, le contexte transféré ne fait que quelques centaines d'octets, au lieu d'embarquer `node_modules/`.
+- **Sécurité** : le conteneur tourne avec l'utilisateur `node` (uid 1000) et non plus en root. Les vulnérabilités passent de 487 à 6 : les 481 du système Debian disparaissent, il ne reste que celles des paquets Node.js (`undici`, etc.).
+
+![Build à froid multi-stage](captures/multistage-build-froid.png)
+![Build avec code modifié, npm ci en cache](captures/multistage-build-modifie.png)
+![Vulnérabilités de l'image multi-stage](captures/multistage-trivy-total.png)
 
 ## 5. Partie 4 : Pile Docker Compose
 _À compléter : persistance, isolation réseau, effet de `docker compose down -v`, problème du `--scale app=2` avec `ports`._
