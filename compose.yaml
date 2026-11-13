@@ -1,4 +1,4 @@
-# TP7 partie 4 : pile Compose à compléter.
+# TP7 partie 4 : pile Compose (app + PostgreSQL + Adminer).
 name: visits
 
 services:
@@ -10,10 +10,15 @@ services:
     environment:
       PGHOST: db
       PGPORT: 5432
-      # TODO : PGUSER, PGPASSWORD et PGDATABASE lus depuis le fichier .env
-      #        (syntaxe ${POSTGRES_USER})
-    # TODO : attendre que db soit "healthy" (depends_on + condition)
-    # TODO : réseaux frontend et backend
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - frontend
+      - backend
     restart: unless-stopped
 
   db:
@@ -22,14 +27,26 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    # TODO : volume nommé pgdata monté sur /var/lib/postgresql/data
-    # TODO : healthcheck avec pg_isready
-    # TODO : réseau backend uniquement (aucun port publié)
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
 
   adminer:
     image: adminer:5
     ports:
       - "8080:8080"
-    # TODO : réseau backend
+    networks:
+      - backend
 
-# TODO : déclarer le volume pgdata et les réseaux frontend / backend
+volumes:
+  pgdata:
+
+networks:
+  frontend:
+  backend:
